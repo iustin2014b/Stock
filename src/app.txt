@@ -1,0 +1,922 @@
+import React, { useEffect, useState, useRef } from 'react';
+import './index.css';
+import { Chart as ChartJS} from 'chart.js/auto';
+import { Line } from 'react-chartjs-2';
+
+function App() {
+const [name, setName] = useState("");
+const [values, setValues] = useState(() => []);
+const [valuesMin, setValuesMin] = useState(() => []);
+const [valuesMax, setValuesMax] = useState(() => []);
+  const [dates, setDates] = useState(() => []);
+  const [stockName, setStockName] = useState("");
+  const [buttonClicked, setButtonClicked] =useState(0); //useState(false);
+const [renderIt, setRenderIt] = useState(false);
+const [data, setData] = useState(null);
+const [msg, setMsg] = useState("Enter a company symbol");
+const[interval,setInterval]=useState("60 min")
+
+const [valued, setValued] = React.useState('60 min');
+
+   // const handleChangeD = (event) => {
+   //   setValued(event.target.value);
+   // };
+    function handleChangeDropbox(event){
+        setValued(event.target.value);
+    }
+  function handleButtonClick() {
+   // setButtonClicked(!buttonClicked);//td trig Fetch
+   setButtonClicked(++buttonClicked)
+    setRenderIt(true);
+    document.getElementById("inputBox").value = '';
+  }
+  
+  function handleChangeInput(e) {
+    setStockName(e.target.value);
+    setRenderIt(false);
+  }
+  function handleChangeDropBox(event){
+    setInterval(event.target.value)
+  }
+ // const handleChangeDropBox = (event) => {
+  //  setInterval(event.target.value);
+  //};
+
+const fetchDates = async () => {
+  let datesArray = [];
+  let valuesArray = [];
+  let valuesMinArray = [];
+  let valuesMaxArray = [];
+     const API_Key = 'be8b5e40bff93cde1a3d4cdf0e29a8eb';
+     let interval_=valued
+     let API_Call = `http://api.marketstack.com/v1/eod?access_key=` +    API_Key +    `&symbols=` +    stockName +    `&limit=75`;
+	  API_Call = `http://api.marketstack.com/v1/eod?access_key=be8b5e40bff93cde1a3d4cdf0e29a8eb&symbols=MSFT&limit=75`;
+    API_Call = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=MSFT&interval=60min&apikey=DHE289O3YLGE9ZLP";
+      // let API_Call = "https://jsonplaceholder.typicode.com/todos"
+//let API_Call = "file:///D:/well/jv/date.txt"	 
+	 try {
+     //  const response = await fetch(API_Call);
+       // if(response.ok) 
+		    if(renderIt) 		
+		{
+			 let  data=datas2;
+      //  const data = await response.json();
+      const nameArrayTimes=Object.keys(data) [1];
+		  const arrayOfTimes=Object.keys(data[nameArrayTimes]);
+			 for(let i = 0; i <= 74; i++) {
+            valuesArray.push(parseFloat(data[nameArrayTimes][ arrayOfTimes[i]]['1. open']));
+            valuesMinArray.push(parseFloat(data[nameArrayTimes][ arrayOfTimes[i]]['3. low']));
+            valuesMaxArray.push(parseFloat(data[nameArrayTimes][ arrayOfTimes[i]]['2. high']));		      
+		        datesArray.push(arrayOfTimes[i]);
+          }	 
+      let company= stockName;
+      setMsg( "Succesfull actions" +company +" loaded") ;       
+    } else{
+       setMsg( "connection to site error");
+          //td mesaj de la site
+          //td simbol nu exista
+      }       
+      } catch(error) {
+         throw Error ("Fetch error")
+      }  
+      setValues(valuesArray);
+      setValuesMin(valuesMinArray);
+      setValuesMax(valuesMaxArray);
+      setDates(datesArray);
+	  return () => { //unmounting phase.
+	   //setDates([]);
+    //  setValues([]);
+    }
+    }	
+useEffect(() => {fetchDates() },  [buttonClicked]);
+//document.getElementById("msg").value = message;
+ // <SearchComponent onSubmit = { handleSubmit} />
+ //    <GetInterval value={interval} onChange={handleChangeDropBox} />
+  return (
+    <div>
+
+      
+      
+   <inputSymbol onChange = {handleChangeInput} onClick={handleButtonClick} stockName={stockName}  />
+   <dropdownTime     value={valued}        onChange={handleChangeDropbox}    />
+   <p>Time {valued}!</p>
+   <p>${msg}</p>
+    
+   <chartLine render={renderIt} dates={dates} values={values} valuesMax={valuesMax} valuesMin={valuesMin} inputName={stockName}/>  
+    </div>
+  )
+}
+
+//const Dropdown = ({ value,  onChange }) => {
+ //   function Dropdown({ value,  onChange }) {
+      function dropdownTime(props) {
+    const options = [
+        { label: 'Fruit', value: 'fruit' },
+        { label: 'Vegetable', value: 'vegetable' },
+        { label: 'Meat', value: 'meat' },
+      ];
+      //<select value={value} onChange={onChange}>
+  
+    // {options.map((option) => (
+           // <option value={option.value}>{option.label}</option> 
+     //   ))}
+  return (
+    <label>
+       Time interval
+        <select value={props.value} onChange={props.onChange}>
+        <option value="60 min">Hour</option>
+          <option value="day">Day</option>
+          <option value="meat">Mounth</option>
+        
+      </select>
+    </label>
+  );
+};
+
+
+function inputSymbol(props) {
+  return (
+      <div>
+          <div className='infoDiv'>
+              <label htmlFor="inputBox" className = "header">Search </label>
+              <div className='searchDiv'>
+                  <input name = "inputBox" id="inputBox"  type="text" onChange={props.handleChange} />
+                  <button id="button" onClick={props.onClick}>Search</button>
+              </div>                    
+          </div>         
+      </div>
+  );
+}
+
+
+function chartLine (props) {
+  const datesReveresed = (props.dates).reverse();
+  const renderIt = props.render;
+  if (props.render==false) 
+    return(false);
+ else  //renderIt &&  
+  return (
+      <div>
+          {renderIt &&  
+          <Line 
+              data={
+                  {
+                      labels: datesReveresed,
+                      datasets: [{
+                          label: 'open day',
+                          data: props.values,
+                          borderColor:'blue',
+                          borderWidth: 2,
+                          pointRadius:3,
+                        
+                          fill :true 
+                      },{
+                        label: 'min',
+                        data: props.valuesMin,
+                        borderColor:'yellow',
+                        pointRadius:1,
+                    
+                        borderWidth: 0.5
+                    },{
+                      label: 'max',
+                      data: props.valuesMax,
+                      borderColor:'pink',
+                      pointRadius:1,
+                      borderWidth: 0.5
+                  }]
+                  }
+              }
+              height={1100}
+              width={1500}
+          />}
+      </div>);
+}
+//var myChart = new Chart("myChart", {
+//  type: "line",
+ // data: {},
+ // options: {}
+//});,
+//let tt=Object.keys(datas["Tim"]);
+//console.log(tt);
+//console.log(datas["Tim"]);
+//console.log(datas["Tim"][tt[1]]);
+//console.log(tt[1]["1. open"]);
+//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+var datas2 ={
+  "Meta Data": {
+      "1. Information": "Intraday (60min) open, high, low, close prices and volume",
+      "2. Symbol": "MSFT",
+      "3. Last Refreshed": "2022-06-24 20:00:00",
+      "4. Interval": "60min",
+      "5. Output Size": "Compact",
+      "6. Time Zone": "US/Eastern"
+  },
+  "Time Series (60min)": {
+      "2022-06-24 20:00:00": {
+          "1. open": "267.7500",
+          "2. high": "268.5000",
+          "3. low": "267.7500",
+          "4. close": "268.2000",
+          "5. volume": "13137"
+      },
+      "2022-06-24 19:00:00": {
+          "1. open": "267.6000",
+          "2. high": "267.8700",
+          "3. low": "267.5500",
+          "4. close": "267.7500",
+          "5. volume": "7124"
+      },
+      "2022-06-24 18:00:00": {
+          "1. open": "267.7100",
+          "2. high": "267.7100",
+          "3. low": "267.5100",
+          "4. close": "267.6000",
+          "5. volume": "49588"
+      },
+      "2022-06-24 17:00:00": {
+          "1. open": "267.7400",
+          "2. high": "267.9200",
+          "3. low": "267.1008",
+          "4. close": "267.9200",
+          "5. volume": "3159164"
+      },
+      "2022-06-24 16:00:00": {
+          "1. open": "265.0440",
+          "2. high": "267.9800",
+          "3. low": "264.6610",
+          "4. close": "267.9800",
+          "5. volume": "5232862"
+      },
+      "2022-06-24 15:00:00": {
+          "1. open": "263.9700",
+          "2. high": "265.1700",
+          "3. low": "263.6901",
+          "4. close": "265.0418",
+          "5. volume": "1882836"
+      },
+      "2022-06-24 14:00:00": {
+          "1. open": "264.2650",
+          "2. high": "264.4306",
+          "3. low": "263.6400",
+          "4. close": "263.9500",
+          "5. volume": "1652075"
+      },
+      "2022-06-24 13:00:00": {
+          "1. open": "264.3400",
+          "2. high": "264.7054",
+          "3. low": "261.8500",
+          "4. close": "264.2500",
+          "5. volume": "1462925"
+      },
+      "2022-06-24 12:00:00": {
+          "1. open": "264.8700",
+          "2. high": "265.6600",
+          "3. low": "261.8500",
+          "4. close": "264.3384",
+          "5. volume": "2506798"
+      },
+      "2022-06-24 11:00:00": {
+          "1. open": "264.3900",
+          "2. high": "266.7500",
+          "3. low": "264.0600",
+          "4. close": "264.8600",
+          "5. volume": "4183733"
+      },
+      "2022-06-24 10:00:00": {
+          "1. open": "261.3000",
+          "2. high": "266.6400",
+          "3. low": "261.3000",
+          "4. close": "264.2150",
+          "5. volume": "4483496"
+      },
+      "2022-06-24 09:00:00": {
+          "1. open": "261.5000",
+          "2. high": "262.1785",
+          "3. low": "260.0000",
+          "4. close": "261.3000",
+          "5. volume": "61701"
+      },
+      "2022-06-24 08:00:00": {
+          "1. open": "261.7000",
+          "2. high": "262.0100",
+          "3. low": "261.2000",
+          "4. close": "261.6100",
+          "5. volume": "31470"
+      },
+      "2022-06-24 07:00:00": {
+          "1. open": "262.0000",
+          "2. high": "262.2900",
+          "3. low": "261.9900",
+          "4. close": "262.1800",
+          "5. volume": "8324"
+      },
+      "2022-06-24 06:00:00": {
+          "1. open": "262.2000",
+          "2. high": "262.2000",
+          "3. low": "261.5500",
+          "4. close": "262.0000",
+          "5. volume": "6740"
+      },
+      "2022-06-24 05:00:00": {
+          "1. open": "259.8000",
+          "2. high": "262.0000",
+          "3. low": "259.0100",
+          "4. close": "262.0000",
+          "5. volume": "13993"
+      },
+      "2022-06-23 20:00:00": {
+          "1. open": "258.7700",
+          "2. high": "258.7900",
+          "3. low": "258.0000",
+          "4. close": "258.0000",
+          "5. volume": "6719"
+      },
+      "2022-06-23 19:00:00": {
+          "1. open": "258.2000",
+          "2. high": "258.6000",
+          "3. low": "258.2000",
+          "4. close": "258.5700",
+          "5. volume": "8511"
+      },
+      "2022-06-23 18:00:00": {
+          "1. open": "258.1400",
+          "2. high": "258.2500",
+          "3. low": "258.1100",
+          "4. close": "258.1100",
+          "5. volume": "5932"
+      },
+      "2022-06-23 17:00:00": {
+          "1. open": "258.8500",
+          "2. high": "259.3600",
+          "3. low": "258.0700",
+          "4. close": "258.2100",
+          "5. volume": "2133516"
+      },
+      "2022-06-23 16:00:00": {
+          "1. open": "257.9300",
+          "2. high": "259.3700",
+          "3. low": "257.5800",
+          "4. close": "258.9200",
+          "5. volume": "4166436"
+      },
+      "2022-06-23 15:00:00": {
+          "1. open": "257.0300",
+          "2. high": "258.3600",
+          "3. low": "256.8300",
+          "4. close": "257.9500",
+          "5. volume": "2457542"
+      },
+      "2022-06-23 14:00:00": {
+          "1. open": "255.3800",
+          "2. high": "257.0400",
+          "3. low": "254.8900",
+          "4. close": "257.0201",
+          "5. volume": "1793626"
+      },
+      "2022-06-23 13:00:00": {
+          "1. open": "256.4600",
+          "2. high": "256.6578",
+          "3. low": "254.8900",
+          "4. close": "255.3700",
+          "5. volume": "2469914"
+      },
+      "2022-06-23 12:00:00": {
+          "1. open": "258.3800",
+          "2. high": "258.4200",
+          "3. low": "256.3700",
+          "4. close": "256.4400",
+          "5. volume": "2285431"
+      },
+      "2022-06-23 11:00:00": {
+          "1. open": "256.2300",
+          "2. high": "258.4900",
+          "3. low": "254.7400",
+          "4. close": "258.3876",
+          "5. volume": "3334709"
+      },
+      "2022-06-23 10:00:00": {
+          "1. open": "254.8300",
+          "2. high": "256.3500",
+          "3. low": "253.6300",
+          "4. close": "256.2553",
+          "5. volume": "3074947"
+      },
+      "2022-06-23 09:00:00": {
+          "1. open": "255.9380",
+          "2. high": "256.1900",
+          "3. low": "251.8200",
+          "4. close": "254.9245",
+          "5. volume": "54943"
+      },
+      "2022-06-23 08:00:00": {
+          "1. open": "256.0200",
+          "2. high": "256.5000",
+          "3. low": "255.5000",
+          "4. close": "256.2500",
+          "5. volume": "32678"
+      },
+      "2022-06-23 07:00:00": {
+          "1. open": "255.2000",
+          "2. high": "256.5400",
+          "3. low": "254.9100",
+          "4. close": "256.5000",
+          "5. volume": "7476"
+      },
+      "2022-06-23 06:00:00": {
+          "1. open": "254.2400",
+          "2. high": "255.3000",
+          "3. low": "254.2400",
+          "4. close": "255.3000",
+          "5. volume": "8328"
+      },
+      "2022-06-23 05:00:00": {
+          "1. open": "251.5300",
+          "2. high": "255.0000",
+          "3. low": "251.4500",
+          "4. close": "253.9100",
+          "5. volume": "38405"
+      },
+      "2022-06-22 20:00:00": {
+          "1. open": "252.0200",
+          "2. high": "252.0200",
+          "3. low": "250.5500",
+          "4. close": "251.4700",
+          "5. volume": "10771"
+      },
+      "2022-06-22 19:00:00": {
+          "1. open": "252.9500",
+          "2. high": "252.9800",
+          "3. low": "251.9800",
+          "4. close": "252.1400",
+          "5. volume": "8263"
+      },
+      "2022-06-22 18:00:00": {
+          "1. open": "252.8100",
+          "2. high": "252.9890",
+          "3. low": "252.8000",
+          "4. close": "252.8200",
+          "5. volume": "2699"
+      },
+      "2022-06-22 17:00:00": {
+          "1. open": "253.1300",
+          "2. high": "253.1800",
+          "3. low": "252.4900",
+          "4. close": "252.9500",
+          "5. volume": "1914873"
+      },
+      "2022-06-22 16:00:00": {
+          "1. open": "255.6100",
+          "2. high": "256.0401",
+          "3. low": "252.6100",
+          "4. close": "253.0000",
+          "5. volume": "3922252"
+      },
+      "2022-06-22 15:00:00": {
+          "1. open": "255.0900",
+          "2. high": "256.4800",
+          "3. low": "255.0300",
+          "4. close": "255.5800",
+          "5. volume": "1653136"
+      },
+      "2022-06-22 14:00:00": {
+          "1. open": "254.9100",
+          "2. high": "255.5700",
+          "3. low": "254.3500",
+          "4. close": "255.0800",
+          "5. volume": "1397508"
+      },
+      "2022-06-22 13:00:00": {
+          "1. open": "254.0850",
+          "2. high": "254.9900",
+          "3. low": "253.4200",
+          "4. close": "254.9000",
+          "5. volume": "1920212"
+      },
+      "2022-06-22 12:00:00": {
+          "1. open": "257.0600",
+          "2. high": "257.1200",
+          "3. low": "254.0375",
+          "4. close": "254.0850",
+          "5. volume": "3282143"
+      },
+      "2022-06-22 11:00:00": {
+          "1. open": "254.0200",
+          "2. high": "257.1700",
+          "3. low": "253.3400",
+          "4. close": "257.0500",
+          "5. volume": "3561037"
+      },
+      "2022-06-22 10:00:00": {
+          "1. open": "249.5500",
+          "2. high": "254.5300",
+          "3. low": "249.2100",
+          "4. close": "254.0000",
+          "5. volume": "3327080"
+      },
+      "2022-06-22 09:00:00": {
+          "1. open": "249.3037",
+          "2. high": "253.1060",
+          "3. low": "248.6100",
+          "4. close": "249.5000",
+          "5. volume": "696623"
+      },
+      "2022-06-22 08:00:00": {
+          "1. open": "249.4500",
+          "2. high": "249.8400",
+          "3. low": "249.2900",
+          "4. close": "249.4900",
+          "5. volume": "19367"
+      },
+      "2022-06-22 07:00:00": {
+          "1. open": "248.8800",
+          "2. high": "249.4800",
+          "3. low": "248.8800",
+          "4. close": "249.4800",
+          "5. volume": "7969"
+      },
+      "2022-06-22 06:00:00": {
+          "1. open": "248.3000",
+          "2. high": "248.8000",
+          "3. low": "248.3000",
+          "4. close": "248.5100",
+          "5. volume": "9190"
+      },
+      "2022-06-22 05:00:00": {
+          "1. open": "250.1000",
+          "2. high": "250.1000",
+          "3. low": "248.1000",
+          "4. close": "248.1000",
+          "5. volume": "33671"
+      },
+      "2022-06-21 20:00:00": {
+          "1. open": "253.3000",
+          "2. high": "253.3600",
+          "3. low": "253.0900",
+          "4. close": "253.0900",
+          "5. volume": "4107"
+      },
+      "2022-06-21 19:00:00": {
+          "1. open": "253.6100",
+          "2. high": "253.7700",
+          "3. low": "253.0000",
+          "4. close": "253.4000",
+          "5. volume": "10437"
+      },
+      "2022-06-21 18:00:00": {
+          "1. open": "253.6000",
+          "2. high": "253.7500",
+          "3. low": "253.5200",
+          "4. close": "253.6101",
+          "5. volume": "55412"
+      },
+      "2022-06-21 17:00:00": {
+          "1. open": "253.7400",
+          "2. high": "253.9509",
+          "3. low": "253.3000",
+          "4. close": "253.7800",
+          "5. volume": "4303819"
+      },
+      "2022-06-21 16:00:00": {
+          "1. open": "253.9900",
+          "2. high": "254.4900",
+          "3. low": "253.1500",
+          "4. close": "253.7400",
+          "5. volume": "4030922"
+      },
+      "2022-06-21 15:00:00": {
+          "1. open": "253.2500",
+          "2. high": "254.0200",
+          "3. low": "252.6500",
+          "4. close": "253.9800",
+          "5. volume": "1944416"
+      },
+      "2022-06-21 14:00:00": {
+          "1. open": "253.7199",
+          "2. high": "254.1700",
+          "3. low": "252.9600",
+          "4. close": "253.2499",
+          "5. volume": "2281562"
+      },
+      "2022-06-21 13:00:00": {
+          "1. open": "253.3700",
+          "2. high": "253.8200",
+          "3. low": "252.7700",
+          "4. close": "253.7200",
+          "5. volume": "1786904"
+      },
+      "2022-06-21 12:00:00": {
+          "1. open": "254.3250",
+          "2. high": "254.4100",
+          "3. low": "253.1500",
+          "4. close": "253.3800",
+          "5. volume": "2253184"
+      },
+      "2022-06-21 11:00:00": {
+          "1. open": "253.0600",
+          "2. high": "254.7500",
+          "3. low": "252.7700",
+          "4. close": "254.3300",
+          "5. volume": "3742681"
+      },
+      "2022-06-21 10:00:00": {
+          "1. open": "250.1100",
+          "2. high": "254.3500",
+          "3. low": "249.5100",
+          "4. close": "253.1400",
+          "5. volume": "4103036"
+      },
+      "2022-06-21 09:00:00": {
+          "1. open": "251.6000",
+          "2. high": "251.7899",
+          "3. low": "247.0310",
+          "4. close": "250.3700",
+          "5. volume": "94473"
+      },
+      "2022-06-21 08:00:00": {
+          "1. open": "251.5100",
+          "2. high": "251.7600",
+          "3. low": "250.6400",
+          "4. close": "250.7500",
+          "5. volume": "37043"
+      },
+      "2022-06-21 07:00:00": {
+          "1. open": "251.5900",
+          "2. high": "251.8400",
+          "3. low": "251.5900",
+          "4. close": "251.7900",
+          "5. volume": "3610"
+      },
+      "2022-06-21 06:00:00": {
+          "1. open": "252.2000",
+          "2. high": "252.2000",
+          "3. low": "251.5900",
+          "4. close": "251.5900",
+          "5. volume": "4621"
+      },
+      "2022-06-21 05:00:00": {
+          "1. open": "249.0100",
+          "2. high": "252.7000",
+          "3. low": "249.0100",
+          "4. close": "252.0600",
+          "5. volume": "16867"
+      },
+      "2022-06-17 20:00:00": {
+          "1. open": "247.6200",
+          "2. high": "247.6300",
+          "3. low": "247.5000",
+          "4. close": "247.5000",
+          "5. volume": "4121"
+      },
+      "2022-06-17 19:00:00": {
+          "1. open": "247.4700",
+          "2. high": "247.6300",
+          "3. low": "247.4700",
+          "4. close": "247.6000",
+          "5. volume": "5728"
+      },
+      "2022-06-17 18:00:00": {
+          "1. open": "247.5700",
+          "2. high": "247.7200",
+          "3. low": "247.4700",
+          "4. close": "247.6200",
+          "5. volume": "154349"
+      },
+      "2022-06-17 17:00:00": {
+          "1. open": "247.6500",
+          "2. high": "248.0048",
+          "3. low": "247.0500",
+          "4. close": "247.5000",
+          "5. volume": "3027249"
+      },
+      "2022-06-17 16:00:00": {
+          "1. open": "249.3900",
+          "2. high": "250.0000",
+          "3. low": "247.5000",
+          "4. close": "247.5300",
+          "5. volume": "5817724"
+      },
+      "2022-06-17 15:00:00": {
+          "1. open": "249.7200",
+          "2. high": "250.4312",
+          "3. low": "249.2100",
+          "4. close": "249.3800",
+          "5. volume": "2900944"
+      },
+      "2022-06-17 14:00:00": {
+          "1. open": "248.6550",
+          "2. high": "250.5000",
+          "3. low": "248.5550",
+          "4. close": "249.7200",
+          "5. volume": "2965759"
+      },
+      "2022-06-17 13:00:00": {
+          "1. open": "246.9200",
+          "2. high": "248.8270",
+          "3. low": "246.4201",
+          "4. close": "248.6450",
+          "5. volume": "3245617"
+      },
+      "2022-06-17 12:00:00": {
+          "1. open": "245.1300",
+          "2. high": "248.6600",
+          "3. low": "244.4500",
+          "4. close": "246.9000",
+          "5. volume": "3749722"
+      },
+      "2022-06-17 11:00:00": {
+          "1. open": "247.8100",
+          "2. high": "247.9400",
+          "3. low": "244.0300",
+          "4. close": "245.1100",
+          "5. volume": "3963459"
+      },
+      "2022-06-17 10:00:00": {
+          "1. open": "246.1800",
+          "2. high": "249.0000",
+          "3. low": "244.1300",
+          "4. close": "247.7600",
+          "5. volume": "9960657"
+      },
+      "2022-06-17 09:00:00": {
+          "1. open": "247.6900",
+          "2. high": "248.1600",
+          "3. low": "244.3580",
+          "4. close": "246.3000",
+          "5. volume": "107833"
+      },
+      "2022-06-17 08:00:00": {
+          "1. open": "247.0500",
+          "2. high": "248.1000",
+          "3. low": "247.0500",
+          "4. close": "247.2000",
+          "5. volume": "45221"
+      },
+      "2022-06-17 07:00:00": {
+          "1. open": "247.1100",
+          "2. high": "247.8000",
+          "3. low": "247.1000",
+          "4. close": "247.1500",
+          "5. volume": "6230"
+      },
+      "2022-06-17 06:00:00": {
+          "1. open": "246.8000",
+          "2. high": "247.4700",
+          "3. low": "246.8000",
+          "4. close": "247.1000",
+          "5. volume": "9541"
+      },
+      "2022-06-17 05:00:00": {
+          "1. open": "246.5100",
+          "2. high": "247.5000",
+          "3. low": "246.5000",
+          "4. close": "246.8200",
+          "5. volume": "6666"
+      },
+      "2022-06-16 20:00:00": {
+          "1. open": "245.4700",
+          "2. high": "245.8200",
+          "3. low": "244.5300",
+          "4. close": "245.8000",
+          "5. volume": "19544"
+      },
+      "2022-06-16 19:00:00": {
+          "1. open": "245.8400",
+          "2. high": "246.4600",
+          "3. low": "245.0800",
+          "4. close": "245.4000",
+          "5. volume": "43034"
+      },
+      "2022-06-16 18:00:00": {
+          "1. open": "245.8800",
+          "2. high": "245.8900",
+          "3. low": "245.2400",
+          "4. close": "245.8000",
+          "5. volume": "9633"
+      },
+      "2022-06-16 17:00:00": {
+          "1. open": "244.9700",
+          "2. high": "246.6250",
+          "3. low": "244.6884",
+          "4. close": "245.8981",
+          "5. volume": "1950267"
+      },
+      "2022-06-16 16:00:00": {
+          "1. open": "243.4700",
+          "2. high": "245.2600",
+          "3. low": "243.1100",
+          "4. close": "245.1100",
+          "5. volume": "6805404"
+      },
+      "2022-06-16 15:00:00": {
+          "1. open": "243.5700",
+          "2. high": "244.6299",
+          "3. low": "243.0200",
+          "4. close": "243.4900",
+          "5. volume": "2854731"
+      },
+      "2022-06-16 14:00:00": {
+          "1. open": "245.2200",
+          "2. high": "246.2900",
+          "3. low": "243.5500",
+          "4. close": "243.5800",
+          "5. volume": "2862357"
+      },
+      "2022-06-16 13:00:00": {
+          "1. open": "245.3500",
+          "2. high": "245.4000",
+          "3. low": "244.1400",
+          "4. close": "245.2400",
+          "5. volume": "2377294"
+      },
+      "2022-06-16 12:00:00": {
+          "1. open": "244.1900",
+          "2. high": "246.2000",
+          "3. low": "244.1800",
+          "4. close": "245.3479",
+          "5. volume": "2937877"
+      },
+      "2022-06-16 11:00:00": {
+          "1. open": "246.6818",
+          "2. high": "246.6818",
+          "3. low": "243.5700",
+          "4. close": "244.2300",
+          "5. volume": "3717811"
+      },
+      "2022-06-16 10:00:00": {
+          "1. open": "246.5400",
+          "2. high": "247.4174",
+          "3. low": "244.9000",
+          "4. close": "246.6700",
+          "5. volume": "3607739"
+      },
+      "2022-06-16 09:00:00": {
+          "1. open": "244.5000",
+          "2. high": "251.1310",
+          "3. low": "244.4400",
+          "4. close": "246.5300",
+          "5. volume": "187608"
+      },
+      "2022-06-16 08:00:00": {
+          "1. open": "244.7600",
+          "2. high": "246.1800",
+          "3. low": "244.4100",
+          "4. close": "245.1000",
+          "5. volume": "85430"
+      },
+      "2022-06-16 07:00:00": {
+          "1. open": "244.6200",
+          "2. high": "245.3500",
+          "3. low": "244.1500",
+          "4. close": "244.5900",
+          "5. volume": "11152"
+      },
+      "2022-06-16 06:00:00": {
+          "1. open": "244.5300",
+          "2. high": "244.7500",
+          "3. low": "243.5000",
+          "4. close": "244.7500",
+          "5. volume": "21570"
+      },
+      "2022-06-16 05:00:00": {
+          "1. open": "251.9700",
+          "2. high": "251.9700",
+          "3. low": "244.8400",
+          "4. close": "244.8400",
+          "5. volume": "40861"
+      },
+      "2022-06-15 20:00:00": {
+          "1. open": "253.3200",
+          "2. high": "253.8900",
+          "3. low": "252.5000",
+          "4. close": "253.8100",
+          "5. volume": "21227"
+      },
+      "2022-06-15 19:00:00": {
+          "1. open": "252.5200",
+          "2. high": "253.6199",
+          "3. low": "252.0200",
+          "4. close": "253.3000",
+          "5. volume": "20501"
+      },
+      "2022-06-15 18:00:00": {
+          "1. open": "251.7000",
+          "2. high": "252.5000",
+          "3. low": "251.7000",
+          "4. close": "252.5000",
+          "5. volume": "40140"
+      },
+      "2022-06-15 17:00:00": {
+          "1. open": "251.7600",
+          "2. high": "251.9700",
+          "3. low": "251.0000",
+          "4. close": "251.8000",
+          "5. volume": "1238269"
+      }
+  }
+}
+var datas = [{"open":261.81,"high":267.98,"low":261.72,"close":267.7,"volume":33900700.0,"adj_high":null,"adj_low":null,"adj_close":267.7,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-24T00:00:00+0000"},{"open":255.57,"high":259.37,"low":253.63,"close":258.86,"volume":25844400.0,"adj_high":null,"adj_low":null,"adj_close":258.86,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-23T00:00:00+0000"},{"open":251.89,"high":257.17,"low":250.38,"close":253.13,"volume":25931728.0,"adj_high":null,"adj_low":null,"adj_close":253.13,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-22T00:00:00+0000"},{"open":250.26,"high":254.75,"low":249.51,"close":253.74,"volume":29913000.0,"adj_high":null,"adj_low":null,"adj_close":253.74,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-21T00:00:00+0000"},{"open":244.7,"high":250.5,"low":244.03,"close":247.65,"volume":42800400.0,"adj_high":null,"adj_low":null,"adj_close":247.65,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-17T00:00:00+0000"},{"open":245.98,"high":247.4174,"low":243.03,"close":244.97,"volume":31118528.0,"adj_high":null,"adj_low":null,"adj_close":244.97,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-16T00:00:00+0000"},{"open":248.31,"high":255.3,"low":246.42,"close":251.76,"volume":33073500.0,"adj_high":null,"adj_low":null,"adj_close":251.76,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-15T00:00:00+0000"},{"open":243.86,"high":245.74,"low":241.51,"close":244.49,"volume":28616700.0,"adj_high":null,"adj_low":null,"adj_close":244.49,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-14T00:00:00+0000"},{"open":245.11,"high":249.02,"low":241.53,"close":242.26,"volume":46135788.0,"adj_high":null,"adj_low":null,"adj_close":242.26,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-13T00:00:00+0000"},{"open":260.58,"high":260.58,"low":252.53,"close":252.99,"volume":31422800.0,"adj_high":null,"adj_low":null,"adj_close":252.99,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-10T00:00:00+0000"},{"open":267.78,"high":272.71,"low":264.63,"close":264.79,"volume":26425500.0,"adj_high":null,"adj_low":null,"adj_close":264.79,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-09T00:00:00+0000"},{"open":271.71,"high":273.0,"low":269.61,"close":270.41,"volume":17369700.0,"adj_high":null,"adj_low":null,"adj_close":270.41,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-08T00:00:00+0000"},{"open":266.64,"high":273.13,"low":265.94,"close":272.5,"volume":22838600.0,"adj_high":null,"adj_low":null,"adj_close":272.5,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-07T00:00:00+0000"},{"open":272.06,"high":274.17,"low":267.245,"close":268.75,"volume":22400342.0,"adj_high":null,"adj_low":null,"adj_close":268.75,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-06T00:00:00+0000"},{"open":270.31,"high":273.45,"low":268.41,"close":270.02,"volume":28048000.0,"adj_high":null,"adj_low":null,"adj_close":270.02,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-03T00:00:00+0000"},{"open":264.45,"high":274.65,"low":261.6,"close":274.58,"volume":43976900.0,"adj_high":null,"adj_low":null,"adj_close":274.58,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-02T00:00:00+0000"},{"open":275.2,"high":277.69,"low":270.04,"close":272.42,"volume":25273400.0,"adj_high":null,"adj_low":null,"adj_close":272.42,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-06-01T00:00:00+0000"},{"open":272.53,"high":274.77,"low":268.94,"close":271.87,"volume":37589536.0,"adj_high":null,"adj_low":null,"adj_close":271.87,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-31T00:00:00+0000"},{"open":268.48,"high":273.34,"low":267.56,"close":273.24,"volume":26889500.0,"adj_high":null,"adj_low":null,"adj_close":273.24,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-27T00:00:00+0000"},{"open":262.27,"high":267.0,"low":261.43,"close":265.9,"volume":24961069.0,"adj_high":null,"adj_low":null,"adj_close":265.9,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-26T00:00:00+0000"},{"open":258.14,"high":264.58,"low":257.125,"close":262.52,"volume":28495449.0,"adj_high":null,"adj_low":null,"adj_close":262.52,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-25T00:00:00+0000"},{"open":257.89,"high":261.33,"low":253.5,"close":259.62,"volume":28991300.0,"adj_high":null,"adj_low":null,"adj_close":259.62,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-24T00:00:00+0000"},{"open":255.49,"high":261.5,"low":253.44,"close":260.65,"volume":33175379.0,"adj_high":null,"adj_low":null,"adj_close":260.65,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-23T00:00:00+0000"},{"open":257.24,"high":258.54,"low":246.44,"close":252.56,"volume":39169300.0,"adj_high":null,"adj_low":null,"adj_close":252.56,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-20T00:00:00+0000"},{"open":253.9,"high":257.67,"low":251.88,"close":253.14,"volume":32692286.0,"adj_high":null,"adj_low":null,"adj_close":253.14,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-19T00:00:00+0000"},{"open":263.0,"high":263.6,"low":252.77,"close":254.08,"volume":31355985.0,"adj_high":null,"adj_low":null,"adj_close":254.08,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-18T00:00:00+0000"},{"open":266.11,"high":268.33,"low":262.46,"close":266.82,"volume":28806100.0,"adj_high":null,"adj_low":null,"adj_close":266.82,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-17T00:00:00+0000"},{"open":259.96,"high":265.82,"low":255.78,"close":261.5,"volume":32504600.0,"adj_high":null,"adj_low":null,"adj_close":261.5,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-16T00:00:00+0000"},{"open":257.35,"high":263.04,"low":255.35,"close":261.12,"volume":34893400.0,"adj_high":null,"adj_low":null,"adj_close":261.12,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-13T00:00:00+0000"},{"open":257.69,"high":259.88,"low":250.02,"close":255.35,"volume":50970700.0,"adj_high":null,"adj_low":null,"adj_close":255.35,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-12T00:00:00+0000"},{"open":265.68,"high":271.36,"low":259.3,"close":260.55,"volume":48894500.0,"adj_high":null,"adj_low":null,"adj_close":260.55,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-11T00:00:00+0000"},{"open":271.69,"high":273.75,"low":265.07,"close":269.5,"volume":39292300.0,"adj_high":null,"adj_low":null,"adj_close":269.5,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-10T00:00:00+0000"},{"open":270.06,"high":272.36,"low":263.32,"close":264.58,"volume":47669700.0,"adj_high":null,"adj_low":null,"adj_close":264.58,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-09T00:00:00+0000"},{"open":274.81,"high":279.25,"low":271.27,"close":274.73,"volume":37748300.0,"adj_high":null,"adj_low":null,"adj_close":274.73,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-06T00:00:00+0000"},{"open":285.54,"high":286.35,"low":274.34,"close":277.35,"volume":43260386.0,"adj_high":null,"adj_low":null,"adj_close":277.35,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-05T00:00:00+0000"},{"open":282.59,"high":290.88,"low":276.73,"close":289.98,"volume":33578100.0,"adj_high":null,"adj_low":null,"adj_close":289.98,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-04T00:00:00+0000"},{"open":283.96,"high":284.13,"low":280.15,"close":281.78,"volume":25965100.0,"adj_high":null,"adj_low":null,"adj_close":281.78,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-03T00:00:00+0000"},{"open":277.71,"high":284.94,"low":276.22,"close":284.47,"volume":35104000.0,"adj_high":null,"adj_low":null,"adj_close":284.47,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-05-02T00:00:00+0000"},{"open":288.61,"high":289.88,"low":276.5,"close":277.52,"volume":37025000.0,"adj_high":null,"adj_low":null,"adj_close":277.52,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-29T00:00:00+0000"},{"open":285.19,"high":290.98,"low":281.46,"close":289.63,"volume":32962000.0,"adj_high":null,"adj_low":null,"adj_close":289.63,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-28T00:00:00+0000"},{"open":282.1,"high":290.97,"low":279.16,"close":283.22,"volume":63388400.0,"adj_high":null,"adj_low":null,"adj_close":283.22,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-27T00:00:00+0000"},{"open":277.5,"high":278.36,"low":270.0,"close":270.22,"volume":45287600.0,"adj_high":null,"adj_low":null,"adj_close":270.22,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-26T00:00:00+0000"},{"open":273.29,"high":281.11,"low":270.77,"close":280.72,"volume":35609500.0,"adj_high":null,"adj_low":null,"adj_close":280.72,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-25T00:00:00+0000"},{"open":281.68,"high":283.2,"low":273.38,"close":274.03,"volume":29379300.0,"adj_high":null,"adj_low":null,"adj_close":274.03,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-22T00:00:00+0000"},{"open":288.58,"high":293.3,"low":280.06,"close":280.81,"volume":29426200.0,"adj_high":null,"adj_low":null,"adj_close":280.81,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-21T00:00:00+0000"},{"open":289.4,"high":289.7,"low":285.37,"close":286.36,"volume":22874600.0,"adj_high":null,"adj_low":null,"adj_close":286.36,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-20T00:00:00+0000"},{"open":279.38,"high":286.17,"low":278.41,"close":285.3,"volume":22266700.0,"adj_high":null,"adj_low":null,"adj_close":285.3,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-19T00:00:00+0000"},{"open":278.91,"high":282.46,"low":278.34,"close":280.52,"volume":20749800.0,"adj_high":null,"adj_low":null,"adj_close":280.52,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-18T00:00:00+0000"},{"open":288.09,"high":288.31,"low":279.32,"close":279.83,"volume":28107900.0,"adj_high":null,"adj_low":null,"adj_close":279.83,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-14T00:00:00+0000"},{"open":282.73,"high":288.58,"low":281.3,"close":287.62,"volume":21872900.0,"adj_high":null,"adj_low":null,"adj_close":287.62,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-13T00:00:00+0000"},{"open":289.24,"high":290.74,"low":280.49,"close":282.06,"volume":30926300.0,"adj_high":null,"adj_low":null,"adj_close":282.06,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-12T00:00:00+0000"},{"open":291.79,"high":292.61,"low":285.0,"close":285.26,"volume":34514100.0,"adj_high":null,"adj_low":null,"adj_close":285.26,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-11T00:00:00+0000"},{"open":300.44,"high":301.12,"low":296.28,"close":296.97,"volume":24347400.0,"adj_high":null,"adj_low":null,"adj_close":296.97,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-08T00:00:00+0000"},{"open":296.66,"high":303.65,"low":296.35,"close":301.37,"volume":31390100.0,"adj_high":null,"adj_low":null,"adj_close":301.37,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-07T00:00:00+0000"},{"open":305.19,"high":307.0,"low":296.71,"close":299.5,"volume":40058900.0,"adj_high":null,"adj_low":null,"adj_close":299.5,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-06T00:00:00+0000"},{"open":313.27,"high":314.87,"low":309.87,"close":310.88,"volume":23129000.0,"adj_high":null,"adj_low":null,"adj_close":310.88,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-05T00:00:00+0000"},{"open":310.09,"high":315.11,"low":309.71,"close":314.97,"volume":24289600.0,"adj_high":null,"adj_low":null,"adj_close":314.97,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-04T00:00:00+0000"},{"open":309.37,"high":310.13,"low":305.54,"close":309.42,"volume":27085100.0,"adj_high":null,"adj_low":null,"adj_close":309.42,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-04-01T00:00:00+0000"},{"open":313.9,"high":315.14,"low":307.89,"close":308.31,"volume":33396000.0,"adj_high":null,"adj_low":null,"adj_close":308.31,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-31T00:00:00+0000"},{"open":313.76,"high":315.94,"low":311.58,"close":313.86,"volume":28163555.0,"adj_high":null,"adj_low":null,"adj_close":313.86,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-30T00:00:00+0000"},{"open":313.91,"high":315.82,"low":309.05,"close":315.41,"volume":30376600.0,"adj_high":null,"adj_low":null,"adj_close":315.41,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-29T00:00:00+0000"},{"open":304.33,"high":310.8,"low":304.33,"close":310.7,"volume":29549300.0,"adj_high":null,"adj_low":null,"adj_close":310.7,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-28T00:00:00+0000"},{"open":305.23,"high":305.5,"low":299.29,"close":303.68,"volume":22550600.0,"adj_high":null,"adj_low":null,"adj_close":303.68,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-25T00:00:00+0000"},{"open":299.14,"high":304.2,"low":298.315,"close":304.1,"volume":22702420.0,"adj_high":null,"adj_low":null,"adj_close":304.1,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-24T00:00:00+0000"},{"open":300.51,"high":303.23,"low":297.72,"close":299.49,"volume":25694200.0,"adj_high":null,"adj_low":null,"adj_close":299.49,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-23T00:00:00+0000"},{"open":299.8,"high":305.0,"low":298.77,"close":304.06,"volume":27579500.0,"adj_high":null,"adj_low":null,"adj_close":304.06,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-22T00:00:00+0000"},{"open":298.89,"high":300.14,"low":294.9,"close":299.16,"volume":28331500.0,"adj_high":null,"adj_low":null,"adj_close":299.16,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-21T00:00:00+0000"},{"open":295.37,"high":301.0,"low":292.73,"close":300.43,"volume":43317000.0,"adj_high":null,"adj_low":null,"adj_close":300.43,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-18T00:00:00+0000"},{"open":293.29,"high":295.61,"low":289.37,"close":295.22,"volume":30791300.0,"adj_high":null,"adj_low":null,"adj_close":295.22,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-17T00:00:00+0000"},{"open":289.11,"high":294.57,"low":283.2,"close":294.39,"volume":37716774.0,"adj_high":null,"adj_low":null,"adj_close":294.39,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-16T00:00:00+0000"},{"open":280.35,"high":287.82,"low":278.73,"close":287.15,"volume":34208700.0,"adj_high":null,"adj_low":null,"adj_close":287.15,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-15T00:00:00+0000"},{"open":280.34,"high":285.3992,"low":275.82,"close":276.44,"volume":30660747.0,"adj_high":null,"adj_low":null,"adj_close":276.44,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-14T00:00:00+0000"},{"open":287.96,"high":289.51,"low":279.43,"close":280.07,"volume":27192600.0,"adj_high":null,"adj_low":null,"adj_close":280.07,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-11T00:00:00+0000"},{"open":283.02,"high":286.5899,"low":280.58,"close":285.59,"volume":30628012.0,"adj_high":null,"adj_low":null,"adj_close":285.59,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-10T00:00:00+0000"},{"open":283.44,"high":289.6,"low":280.79,"close":288.5,"volume":35204480.0,"adj_high":null,"adj_low":null,"adj_close":288.5,"adj_open":null,"adj_volume":null,"split_factor":1.0,"dividend":0.0,"symbol":"MSFT","exchange":"XNAS","date":"2022-03-09T00:00:00+0000"}];	
+//const root = ReactDOM.createRoot(document.getElementById('root'));
+//root.render(<root />);
+
+export default App;
+//  // <LineChart render={renderIt} dates={dates} values={values} inputName={stockName}/>
